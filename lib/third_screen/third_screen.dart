@@ -68,7 +68,7 @@ class FirstNumberWidget extends StatelessWidget {
       // если что-то изменилось в поле,
       // то мы записываем это в нашу модель (обновляем ее данные):
       onChanged: (value) =>
-          SimpleCalcWidgetProvider.of<SimpleCalcWidgetModel>(context)
+          SimpleCalcWidgetProvider.read<SimpleCalcWidgetModel>(context)
               ?.firstNumber = value,
     );
   }
@@ -85,7 +85,7 @@ class SecondNumberWidget extends StatelessWidget {
       // если что-то изменилось в поле,
       // то мы записываем это в нашу модель (обновляем ее данные):
       onChanged: (value) =>
-          SimpleCalcWidgetProvider.of<SimpleCalcWidgetModel>(context)
+          SimpleCalcWidgetProvider.read<SimpleCalcWidgetModel>(context)
               ?.secondNumber = value,
     );
   }
@@ -100,7 +100,8 @@ class SubmitButtonWidget extends StatelessWidget {
       // при нажатии на кнопку вызывается метод модели,
       // на сложение двух данных из полей:
       onPressed: () =>
-          SimpleCalcWidgetProvider.of<SimpleCalcWidgetModel>(context)?.summ(),
+          SimpleCalcWidgetProvider.read<SimpleCalcWidgetModel>(context)
+              ?.summ(),
       child: const Text('Result'),
     );
   }
@@ -112,7 +113,9 @@ class ResultWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = SimpleCalcWidgetProvider.of<SimpleCalcWidgetModel>(context)?.summResult ?? '0';
+    final value = SimpleCalcWidgetProvider.watch<SimpleCalcWidgetModel>(context)
+            ?.summResult ??
+        '0';
     return Text('Result: $value');
   }
 }
@@ -201,15 +204,23 @@ class SimpleCalcWidgetProvider<T extends ChangeNotifier>
 
   // статические функции helper которые упрощают вызов dependOnInheritedWidgetOfExactType у контекста,
   // делает запись покороче, сахарок. Он тут уже возвращает модель (еще упростили):
-  static T? of<T>(BuildContext context) {
-    final provider =
-        context.dependOnInheritedWidgetOfExactType<SimpleCalcWidgetProvider>();
+  static T? watch<T extends ChangeNotifier>(BuildContext context) {
+    final provider = context
+        .dependOnInheritedWidgetOfExactType<SimpleCalcWidgetProvider<T>>();
 
     if (provider != null) {
-      return provider.model as T;
+      return provider.notifier as T;
     } else {
       return null;
     }
+  }
+
+  static T? read<T extends ChangeNotifier>(BuildContext context) {
+    final widget = context
+        .getElementForInheritedWidgetOfExactType<SimpleCalcWidgetProvider<T>>()
+        ?.widget;
+
+    return widget is SimpleCalcWidgetProvider ? widget.notifier as T : null;
   }
 }
 
